@@ -30,7 +30,15 @@ export function useTasks() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTasks(data || []);
+      
+      // Cast the data to match our Task interface
+      const typedTasks: Task[] = (data || []).map(task => ({
+        ...task,
+        status: task.status as Task["status"],
+        priority: task.priority as Task["priority"]
+      }));
+      
+      setTasks(typedTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast({
@@ -62,12 +70,20 @@ export function useTasks() {
         .single();
 
       if (error) throw error;
-      setTasks([data, ...tasks]);
+      
+      // Cast the returned data to match our Task interface
+      const typedTask: Task = {
+        ...data,
+        status: data.status as Task["status"],
+        priority: data.priority as Task["priority"]
+      };
+      
+      setTasks([typedTask, ...tasks]);
       toast({
         title: "Erfolg",
         description: "Task wurde erstellt.",
       });
-      return data;
+      return typedTask;
     } catch (error) {
       console.error('Error creating task:', error);
       toast({
@@ -93,7 +109,15 @@ export function useTasks() {
         .single();
 
       if (error) throw error;
-      setTasks(tasks.map(task => task.id === id ? data : task));
+      
+      // Cast the returned data to match our Task interface
+      const typedTask: Task = {
+        ...data,
+        status: data.status as Task["status"],
+        priority: data.priority as Task["priority"]
+      };
+      
+      setTasks(tasks.map(task => task.id === id ? typedTask : task));
     } catch (error) {
       console.error('Error updating task:', error);
       toast({
