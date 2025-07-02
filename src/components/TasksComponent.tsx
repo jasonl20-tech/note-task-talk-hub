@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus, Search, Check, Clock, AlertCircle, ListTodo } from "lucide-react";
 
@@ -40,7 +39,7 @@ export function TasksComponent() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    priority: "medium" as const,
+    priority: "medium" as Task["priority"],
     dueDate: "",
   });
 
