@@ -1,38 +1,10 @@
+
 import { useState } from "react";
 import { Plus, Search, Check, Clock, AlertCircle, ListTodo } from "lucide-react";
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  status: "todo" | "in-progress" | "completed";
-  priority: "low" | "medium" | "high";
-  dueDate: string;
-  createdAt: string;
-}
+import { useTasks, Task } from "@/hooks/useTasks";
 
 export function TasksComponent() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: "Website-Design überarbeiten",
-      description: "Das aktuelle Design modernisieren und mobile Optimierung verbessern",
-      status: "in-progress",
-      priority: "high",
-      dueDate: "2024-01-20",
-      createdAt: "2024-01-10",
-    },
-    {
-      id: 2,
-      title: "Bug-Fixes implementieren",
-      description: "Kritische Bugs aus dem letzten Sprint beheben",
-      status: "todo",
-      priority: "medium",
-      dueDate: "2024-01-18",
-      createdAt: "2024-01-12",
-    },
-  ]);
-
+  const { tasks, loading, createTask, updateTaskStatus, deleteTask } = useTasks();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
@@ -45,35 +17,26 @@ export function TasksComponent() {
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = filterStatus === "all" || task.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
 
-    const newTask: Task = {
-      id: Date.now(),
-      ...formData,
-      status: "todo",
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setTasks([newTask, ...tasks]);
+    await createTask(formData.title, formData.description, formData.priority, formData.dueDate);
     setFormData({ title: "", description: "", priority: "medium", dueDate: "" });
     setShowForm(false);
   };
 
-  const updateTaskStatus = (id: number, status: Task["status"]) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, status } : task
-    ));
+  const handleStatusUpdate = async (id: string, status: Task["status"]) => {
+    await updateTaskStatus(id, status);
   };
 
-  const deleteTask = (id: number) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const handleDelete = async (id: string) => {
+    await deleteTask(id);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -92,6 +55,12 @@ export function TasksComponent() {
       default: return <AlertCircle className="w-4 h-4 text-gray-400" />;
     }
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>;
+  }
 
   return (
     <div>
@@ -211,9 +180,9 @@ export function TasksComponent() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
                       {task.priority === "high" ? "Hoch" : task.priority === "medium" ? "Mittel" : "Niedrig"}
                     </span>
-                    {task.dueDate && (
+                    {task.due_date && (
                       <span className="text-gray-500">
-                        Fällig: {task.dueDate}
+                        Fällig: {new Date(task.due_date).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -222,7 +191,7 @@ export function TasksComponent() {
               <div className="flex gap-2">
                 <select
                   value={task.status}
-                  onChange={(e) => updateTaskStatus(task.id, e.target.value as Task["status"])}
+                  onChange={(e) => handleStatusUpdate(task.id, e.target.value as Task["status"])}
                   className="text-sm px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="todo">Offen</option>
@@ -230,7 +199,7 @@ export function TasksComponent() {
                   <option value="completed">Abgeschlossen</option>
                 </select>
                 <button
-                  onClick={() => deleteTask(task.id)}
+                  onClick={() => handleDelete(task.id)}
                   className="text-red-600 hover:text-red-800 text-sm px-2 py-1"
                 >
                   Löschen

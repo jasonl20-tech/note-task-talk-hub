@@ -1,53 +1,10 @@
 
 import { useState } from "react";
 import { Plus, Search, MessageSquare, ThumbsUp, MessageCircle, Clock } from "lucide-react";
-
-interface ForumPost {
-  id: number;
-  title: string;
-  content: string;
-  author: string;
-  createdAt: string;
-  likes: number;
-  comments: Comment[];
-}
-
-interface Comment {
-  id: number;
-  content: string;
-  author: string;
-  createdAt: string;
-}
+import { useForumPosts, ForumPost } from "@/hooks/useForumPosts";
 
 export function ForumComponent() {
-  const [posts, setPosts] = useState<ForumPost[]>([
-    {
-      id: 1,
-      title: "Diskussion über React Hooks",
-      content: "Was sind eure liebsten React Hooks und warum? Ich bin besonders interessiert an useEffect Optimierungen...",
-      author: "Max Mustermann",
-      createdAt: "2024-01-16",
-      likes: 12,
-      comments: [
-        {
-          id: 1,
-          content: "Ich finde useCallback sehr nützlich für Performance-Optimierungen!",
-          author: "Anna Schmidt",
-          createdAt: "2024-01-16",
-        },
-      ],
-    },
-    {
-      id: 2,
-      title: "Tipps für bessere Code-Organisation",
-      content: "Wie organisiert ihr eure React-Projekte? Welche Ordnerstruktur verwendet ihr?",
-      author: "Lisa Weber",
-      createdAt: "2024-01-15",
-      likes: 8,
-      comments: [],
-    },
-  ]);
-
+  const { posts, loading, createPost, likePost, addComment } = useForumPosts();
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
@@ -59,49 +16,32 @@ export function ForumComponent() {
     post.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim() || !formData.author.trim()) return;
 
-    const newPost: ForumPost = {
-      id: Date.now(),
-      ...formData,
-      createdAt: new Date().toISOString().split('T')[0],
-      likes: 0,
-      comments: [],
-    };
-
-    setPosts([newPost, ...posts]);
+    await createPost(formData.title, formData.content, formData.author);
     setFormData({ title: "", content: "", author: "" });
     setShowForm(false);
   };
 
-  const handleCommentSubmit = (e: React.FormEvent, postId: number) => {
+  const handleCommentSubmit = async (e: React.FormEvent, postId: string) => {
     e.preventDefault();
     if (!commentData.content.trim() || !commentData.author.trim()) return;
 
-    const newComment: Comment = {
-      id: Date.now(),
-      ...commentData,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, comments: [...post.comments, newComment] }
-        : post
-    ));
-
+    await addComment(postId, commentData.content, commentData.author);
     setCommentData({ content: "", author: "" });
   };
 
-  const handleLike = (postId: number) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, likes: post.likes + 1 }
-        : post
-    ));
+  const handleLike = async (postId: string) => {
+    await likePost(postId);
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>;
+  }
 
   if (selectedPost) {
     return (
@@ -116,8 +56,8 @@ export function ForumComponent() {
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{selectedPost.title}</h1>
             <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-              <span>Von {selectedPost.author}</span>
-              <span>{selectedPost.createdAt}</span>
+              <span>Von {selectedPost.author_name}</span>
+              <span>{new Date(selectedPost.created_at).toLocaleDateString()}</span>
               <span className="flex items-center gap-1">
                 <ThumbsUp size={16} />
                 {selectedPost.likes}
@@ -172,9 +112,9 @@ export function ForumComponent() {
                 {selectedPost.comments.map((comment) => (
                   <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                      <span className="font-medium text-gray-700">{comment.author}</span>
+                      <span className="font-medium text-gray-700">{comment.author_name}</span>
                       <span>•</span>
-                      <span>{comment.createdAt}</span>
+                      <span>{new Date(comment.created_at).toLocaleDateString()}</span>
                     </div>
                     <p className="text-gray-700">{comment.content}</p>
                   </div>
@@ -280,10 +220,10 @@ export function ForumComponent() {
             <p className="text-gray-600 text-sm mb-4 line-clamp-2">{post.content}</p>
             <div className="flex items-center justify-between text-sm text-gray-500">
               <div className="flex items-center gap-4">
-                <span>Von {post.author}</span>
+                <span>Von {post.author_name}</span>
                 <span className="flex items-center gap-1">
                   <Clock size={16} />
-                  {post.createdAt}
+                  {new Date(post.created_at).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex items-center gap-4">

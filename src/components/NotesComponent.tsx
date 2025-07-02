@@ -1,33 +1,10 @@
 
 import { useState } from "react";
 import { Plus, Search, Edit, Trash2, FileText } from "lucide-react";
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useNotes, Note } from "@/hooks/useNotes";
 
 export function NotesComponent() {
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: 1,
-      title: "Meeting-Protokoll Q4",
-      content: "Wichtige Punkte aus dem Quartalstreffen: Budget-Planung, neue Features, Team-Erweiterung...",
-      createdAt: "2024-01-15",
-      updatedAt: "2024-01-15",
-    },
-    {
-      id: 2,
-      title: "Projektideen",
-      content: "Sammlung von neuen Projektideen für das kommende Jahr. Dashboard-App, Mobile App, API-Integration...",
-      createdAt: "2024-01-14",
-      updatedAt: "2024-01-16",
-    },
-  ]);
-
+  const { notes, loading, createNote, updateNote, deleteNote } = useNotes();
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -38,24 +15,14 @@ export function NotesComponent() {
     note.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) return;
 
     if (editingNote) {
-      setNotes(notes.map(note => 
-        note.id === editingNote.id 
-          ? { ...note, ...formData, updatedAt: new Date().toISOString().split('T')[0] }
-          : note
-      ));
+      await updateNote(editingNote.id, formData.title, formData.content);
     } else {
-      const newNote: Note = {
-        id: Date.now(),
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      };
-      setNotes([newNote, ...notes]);
+      await createNote(formData.title, formData.content);
     }
 
     setFormData({ title: "", content: "" });
@@ -69,9 +36,15 @@ export function NotesComponent() {
     setShowForm(true);
   };
 
-  const handleDelete = (id: number) => {
-    setNotes(notes.filter(note => note.id !== id));
+  const handleDelete = async (id: string) => {
+    await deleteNote(id);
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>;
+  }
 
   return (
     <div>
@@ -178,9 +151,9 @@ export function NotesComponent() {
             </div>
             <p className="text-gray-600 text-sm mb-4 line-clamp-3">{note.content}</p>
             <div className="text-xs text-gray-500">
-              <p>Erstellt: {note.createdAt}</p>
-              {note.updatedAt !== note.createdAt && (
-                <p>Aktualisiert: {note.updatedAt}</p>
+              <p>Erstellt: {new Date(note.created_at).toLocaleDateString()}</p>
+              {note.updated_at !== note.created_at && (
+                <p>Aktualisiert: {new Date(note.updated_at).toLocaleDateString()}</p>
               )}
             </div>
           </div>
