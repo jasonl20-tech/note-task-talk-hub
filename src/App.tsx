@@ -6,9 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
-import Index from "./pages/Index";
-import Notes from "./pages/Notes";
-import Tasks from "./pages/Tasks";
 import Forum from "./pages/Forum";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -25,21 +22,6 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
-              <AuthGuard>
-                <Index />
-              </AuthGuard>
-            } />
-            <Route path="/notes" element={
-              <AuthGuard>
-                <Notes />
-              </AuthGuard>
-            } />
-            <Route path="/tasks" element={
-              <AuthGuard>
-                <Tasks />
-              </AuthGuard>
-            } />
-            <Route path="/forum" element={
               <AuthGuard>
                 <Forum />
               </AuthGuard>

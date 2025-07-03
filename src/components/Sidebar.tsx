@@ -1,13 +1,12 @@
 
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, FileText, ListTodo, MessageSquare, Menu, X } from "lucide-react";
+import { MessageSquare, Menu, X, Home, TrendingUp, Users } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Notizen", href: "/notes", icon: FileText },
-  { name: "Tasks", href: "/tasks", icon: ListTodo },
-  { name: "Forum", href: "/forum", icon: MessageSquare },
+  { name: "Forum", href: "/", icon: MessageSquare },
+  { name: "Trending", href: "/trending", icon: TrendingUp },
+  { name: "Community", href: "/community", icon: Users },
 ];
 
 export function Sidebar() {
@@ -32,9 +31,9 @@ export function Sidebar() {
         <div className="p-6">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <LayoutDashboard size={20} />
+              <MessageSquare size={20} />
             </div>
-            {isOpen && <h1 className="text-xl font-bold">Dashboard</h1>}
+            {isOpen && <h1 className="text-xl font-bold">Forum</h1>}
           </div>
 
           <nav className="space-y-2">
